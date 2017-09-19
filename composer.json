@@ -1,0 +1,25 @@
+{
+    "name": "soladiem/yii2-assets-minify",
+    "version": "1.0.2",
+    "description": "Minify CSS and JS files",
+    "type": "yii2-extension",
+    "keywords": ["yii", "app", "soladiem", "framework", "js", "css", "assets", "auto assets"],
+    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Denis Sitko",
+            "email": "sitko.dv@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*",
+        "tedivm/jshrink": "*",
+        "natxet/cssmin": "*",
+        "mrclay/minify": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "soladiem\\autoMinify\\": ""
+        }
+    }
+}
