@@ -10,6 +10,7 @@ use yii\base\ {
 };
 use yii\web\ {
 	Application,
+	JsExpression,
 	Response,
 	View
 };
@@ -27,9 +28,10 @@ use soladiem\autoMinify\components\HtmlCompressor;
 
 /**
  * Class AssetsMinify
- * @author Semenov Alexander <semenov@skeeks.com>
- * @author Denis Sitko <sitko.dv@mail.ru>
- * @package sdy\autoMinify
+ *
+ * @author Denis Sitko <sitko.dv@gmail.com>
+ * @copyright Semenov Alexander <semenov@skeeks.com>
+ * @package soladiem\autoMinify
  */
 class AssetsMinify extends Component implements BootstrapInterface
 {
@@ -78,12 +80,12 @@ class AssetsMinify extends Component implements BootstrapInterface
 	/**
 	 * @var array
 	 */
-	public $jsOptions = [];
+	protected $jsOptions = [];
 
 	/**
 	 * @var array
 	 */
-	public $cssOptions = [];
+	protected $cssOptions = [];
 
 	/**
 	 * Turning association JS files
@@ -252,13 +254,13 @@ class AssetsMinify extends Component implements BootstrapInterface
 
 		// Compiling js code on the page
 		if ($view->js && $this->jsMinifyHtml) {
-			\Yii::beginProfile('Compress JS code');
+			Yii::beginProfile('Compress JS code');
 			foreach ($view->js as $pos => $parts) {
 				if ($parts) {
 					$view->js[$pos] = $this->compressJs($parts);
 				}
 			}
-			\Yii::endProfile('Compress JS code');
+			Yii::endProfile('Compress JS code');
 		}
 
 		// Compiling css files into one
@@ -270,16 +272,46 @@ class AssetsMinify extends Component implements BootstrapInterface
 				}
 			}
 
-			\Yii::beginProfile('Compress CSS files');
+			Yii::beginProfile('Compress CSS files');
 			$view->cssFiles = $this->compileCssFiles($view->cssFiles);
-			\Yii::endProfile('Compress CSS files');
+			Yii::endProfile('Compress CSS files');
 		}
 
 		// Compiling css code on the page
 		if ($view->css && $this->cssMinifyHtml) {
-			\Yii::beginProfile('Compress CSS code');
+			Yii::beginProfile('Compress CSS code');
 			$view->css = $this->compressCss($view->css);
-			\Yii::endProfile('Compress CSS code');
+			Yii::endProfile('Compress CSS code');
+		}
+		
+		// Move CSS down
+		if ($view->cssFiles && $this->cssFileBottom)
+		{
+			Yii::beginProfile('Moving CSS files bottom');
+			if ($this->cssFileBottomLoadOnJs)
+			{
+				Yii::beginProfile('Load CSS on JS');
+				$cssFilesString = implode('', $view->cssFiles);
+				$view->cssFiles = [];
+				$script = Html::script(new JsExpression(<<<JS
+        document.write('{$cssFilesString}');
+JS
+				));
+				if (ArrayHelper::getValue($view->jsFiles, View::POS_END)){
+					$view->jsFiles[View::POS_END] = ArrayHelper::merge($view->jsFiles[View::POS_END], [$script]);
+				} else {
+					$view->jsFiles[View::POS_END][] = $script;
+				}
+				Yii::endProfile('Load CSS on JS');
+			} else {
+				if (ArrayHelper::getValue($view->jsFiles, View::POS_END)){
+					$view->jsFiles[View::POS_END] = ArrayHelper::merge($view->cssFiles, $view->jsFiles[View::POS_END]);
+				} else {
+					$view->jsFiles[View::POS_END] = $view->cssFiles;
+				}
+				$view->cssFiles = [];
+			}
+			Yii::endProfile('Moving CSS files bottom');
 		}
 	}
 
