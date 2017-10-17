@@ -46,6 +46,30 @@ enabled = false
 excludeFiles = []
 ```
 
+Массив имен приложений, в шаблонах которых не использовать минификацию файлов.
+В качестве имен приложений используется их id (например, смотреть в файле конфигурации main.php).
+
+```php
+$params = array_merge(
+    require(__DIR__ . '/../../common/config/params.php'),
+    require(__DIR__ . '/params.php')
+);
+
+return [
+    'id' => 'app-backend',
+    ...
+    ];
+```
+
+```php
+$excludeApps = ['app-backend']
+```
+
+Сжимать HTML-код для шаблонов, имена которых включены в массив $excludeApps 
+```php
+$minifyHtmlExcludeApps = true
+```
+
 Время в секундах для чтения каждого asset-файла. По умолчанию значение **3**
 ```php
 readfileTimeout = 3
