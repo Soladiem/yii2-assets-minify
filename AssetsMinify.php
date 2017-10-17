@@ -25,7 +25,6 @@ use Minify_CSS as CSS;
 use CssMin;
 use soladiem\autoMinify\components\HtmlCompressor;
 
-
 /**
  * Class AssetsMinify
  *
@@ -46,6 +45,19 @@ class AssetsMinify extends Component implements BootstrapInterface
 	 * @var array
 	 */
 	public $excludeFiles = [];
+
+	/**
+	 * Excluded applications from the minification.
+	 * Sample, 'app-backend'
+	 * @var array
+	 */
+	public $excludeApps = [];
+
+	/**
+	 * Do not compress HTML code for excluded application names
+	 * @var bool
+	 */
+	public $minifyHtmlExcludeApps = true;
 
 	/**
 	 * Time in seconds for reading each asset file
@@ -196,7 +208,7 @@ class AssetsMinify extends Component implements BootstrapInterface
 				!$app->request->isAjax && !$app->request->isPjax) {
 
 				Yii::beginProfile('Compress assets');
-				$this->_compress($view);
+				$this->compress($view);
 				Yii::endProfile('Compress assets');
 			}
 
@@ -210,20 +222,16 @@ class AssetsMinify extends Component implements BootstrapInterface
 		 */
 		$app->response->on(Response::EVENT_BEFORE_SEND, function (Event $e) use ($app) {
 			/**
-			 * @var $view \yii\web\View
+			 * @var $response \yii\base\Response
 			 */
 			$response = $e->sender;
 
-			if ($this->enabled && $this->htmlCompress &&
-				$response->format == Response::FORMAT_HTML &&
-				!$app->request->isAjax && !$app->request->isPjax) {
-				if (!empty($response->data)) {
-					$response->data = $this->compressHtml($response->data);
-				}
-
-				if (!empty($response->content)) {
-					$response->content = $this->compressHtml($response->content);
-				}
+			if (in_array(Yii::$app->id, $this->excludeApps) && !$this->minifyHtmlExcludeApps) {
+				// do nothing
+			} elseif(in_array(Yii::$app->id, $this->excludeApps) && $this->minifyHtmlExcludeApps){
+				$this->minifyHtml($app, $response);
+			} else {
+				$this->minifyHtml($app, $response);
 			}
 		});
 	}
@@ -232,10 +240,10 @@ class AssetsMinify extends Component implements BootstrapInterface
 	 * Compress css and js files
 	 * @param View $view
 	 */
-	protected function _compress(View $view)
+	protected function compress(View $view)
 	{
 		// Compiling js files into one
-		if ($view->jsFiles && $this->jsFileCompile) {
+		if ($view->jsFiles && $this->jsFileCompile && !in_array(Yii::$app->id, $this->excludeApps)) {
 			// Excluding specified js files
 			foreach ($view->jsFiles as $jsFile => $v) {
 				if (in_array(basename($jsFile), $this->excludeFiles)){
@@ -264,7 +272,7 @@ class AssetsMinify extends Component implements BootstrapInterface
 		}
 
 		// Compiling css files into one
-		if ($view->cssFiles && $this->cssFileCompile) {
+		if ($view->cssFiles && $this->cssFileCompile && !in_array(Yii::$app->id, $this->excludeApps)) {
 			// Excluding specified css files
 			foreach ($view->cssFiles as $cssFile => $v) {
 				if (in_array(basename($cssFile), $this->excludeFiles)){
@@ -312,6 +320,26 @@ JS
 				$view->cssFiles = [];
 			}
 			Yii::endProfile('Moving CSS files bottom');
+		}
+	}
+
+	/**
+	 * Minify HTML
+	 * @param Application $app
+	 * @param Response    $response
+	 */
+	private function minifyHtml(Application $app, Response $response)
+	{
+		if ($this->enabled && $this->htmlCompress &&
+			$response->format == Response::FORMAT_HTML &&
+			!$app->request->isAjax && !$app->request->isPjax) {
+			if (!empty($response->data)) {
+				$response->data = $this->compressHtml($response->data);
+			}
+
+			if (!empty($response->content)) {
+				$response->content = $this->compressHtml($response->content);
+			}
 		}
 	}
 

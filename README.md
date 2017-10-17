@@ -13,7 +13,7 @@ composer require soladiem/yii2-assets-minify
 ```
 или добавте в composer.json
 ```
-"soladiem/yii2-assets-minify": "*"
+"soladiem/yii2-assets-minify": "^1.0"
 ```
 Подключение
 -
