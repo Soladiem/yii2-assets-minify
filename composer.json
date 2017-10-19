@@ -1,6 +1,6 @@
 {
     "name": "soladiem/yii2-assets-minify",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "description": "Minify CSS and JS files",
     "type": "yii2-extension",
     "keywords": ["yii", "app", "soladiem", "framework", "js", "css", "assets", "auto assets"],
